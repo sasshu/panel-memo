@@ -1,5 +1,4 @@
 import MemoList from "../views/MemoList.vue";
-import MemoDetail from "../views/MemoDetail.vue";
 import { createRouter, createWebHistory } from "vue-router";
 
 const routes = [
@@ -9,9 +8,8 @@ const routes = [
     component: MemoList,
   },
   {
-    path: "/detail",
-    name: "detail",
-    component: MemoDetail,
+    path: "/:pathMatch(.*)*",
+    redirect: "/",
   },
 ];
 

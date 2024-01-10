@@ -1,5 +1,24 @@
 <template>
-  <div class="px-4 pb-16">
+  <div class="pt-4 px-4 pb-16 h-100">
+    <v-app-bar class="pr-2">
+      <v-btn icon="mdi-plus" size="large" @click="handleCreateMemo()"></v-btn>
+      <v-text-field
+        v-model="searchText"
+        density="compact"
+        prepend-inner-icon="mdi-magnify"
+        hide-details
+        clearable
+      >
+      </v-text-field>
+    </v-app-bar>
+    <v-img
+      v-if="!memoList.length"
+      width="50%"
+      height="100%"
+      src="../assets/bg-memolist.svg"
+      style="opacity: 0.5"
+      class="mx-auto"
+    ></v-img>
     <v-card
       v-for="(memo, index) in memoList"
       :key="index"
@@ -8,6 +27,7 @@
       elevation="4"
       max-height="200px"
       @dblclick="openMemo(memo)"
+      v-show="isSearchTarget(memo)"
     >
       <div class="float-right pt-2 pr-2 button-group">
         <v-btn
@@ -108,7 +128,7 @@
               :key="color"
               :value="color"
               :class="`bg-${color}-lighten-4 flex-grow-1`"
-              @click="memoList[editingIndex].color = color"
+              @click="handleChangeMemoColor(color)"
             >
             </v-list-item>
           </v-list>
@@ -127,7 +147,7 @@
           size="large"
           @click="handleCopyToClipboard(memoList[editingIndex].body)"
         ></v-btn>
-        <span class="text-body-2 font-weight-bold" :id="`copied-message-opened`"
+        <span class="text-body-2 font-weight-bold" id="copied-message-opened"
           >copied!</span
         >
         <v-btn
@@ -159,7 +179,10 @@
           class="memo-input px-3"
           v-model="memoList[editingIndex].body"
           spellcheck="false"
-          @update:model-value="isMemoUpdated = true"
+          @update:model-value="
+            isMemoUpdated = true;
+            updateMemos();
+          "
         >
           {{ memoList[editingIndex].body }}</v-textarea
         >
@@ -168,72 +191,52 @@
   </v-dialog>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { onMounted } from "vue";
 import { ref } from "vue";
-import type { Ref } from "vue";
 
-interface Memo {
-  isPinned: boolean;
-  color: string;
-  body: string;
-}
+// メモの背景色
+const selectableColors = ["yellow", "green", "blue", "pink"];
 
-const selectableColors: string[] = ["yellow", "green", "blue", "pink"];
+// 全てのメモ
+const memoList = ref([]);
 
-const memoList: Ref<Memo[]> = ref([
-  {
-    isPinned: false,
-    color: "yellow",
-    body: "<やること>\n・洗濯\n・掃除\n・皿洗い\n・仕事の予習\n・新幹線の予約\n・夕飯の買い物",
-  },
-  {
-    isPinned: true,
-    color: "green",
-    body: "hellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohelloあああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああuuuuuuuuuuqqqqqqqqrrrrrrrrggggggg今日は楽しかったです。特に理由はありません。なぜか朝から楽しくてとてもはしゃいでしまいました。",
-  },
-  {
-    isPinned: false,
-    color: "blue",
-    body: "goodmorninggoodmorning\ngoodmorninggoodmorning",
-  },
-  {
-    isPinned: false,
-    color: "green",
-    body: "goodnightgoodnight\ngoodnightgoodnightgoodnight",
-  },
-  {
-    isPinned: false,
-    color: "pink",
-    body: "seeyouseeyouseeyouseeyouseeyou\nseeyouseeyou",
-  },
-  {
-    isPinned: true,
-    color: "blue",
-    body: "あいうえおあいうえお\nあいうえおあいうえお\nあいうえおあいうえお\nあいうえおあいうえお\nあいうえおあいうえお",
-  },
-  {
-    isPinned: false,
-    color: "yellow",
-    body: "いろはにおへと\nちりぬるを\nわかよたれそ\nえひもせす\nういのおくやま\nけふこえて",
-  },
-]);
+const searchText = ref("");
 
-const isDeleteDialogOpened: Ref<boolean> = ref(false);
-const deletingIndex: Ref<number> = ref();
+const isDeleteDialogOpened = ref(false);
+const deletingIndex = ref();
 
-const isEditDialogOpened: Ref<boolean> = ref(false);
-const editingIndex: Ref<number> = ref();
+const isEditDialogOpened = ref(false);
+const editingIndex = ref();
 
-const isMemoUpdated: Ref<boolean> = ref(false);
+// メモのbody（テキスト）が更新されたらTrueに切り替わる
+const isMemoUpdated = ref(false);
 
-onMounted(() => {
+onMounted(async () => {
+  await fetchMemos();
   sortMemos();
 });
 
+// Chrome Storageからメモを取得
+const fetchMemos = async () => {
+  await chrome.storage.sync.get("memos").then((data) => {
+    memoList.value = JSON.parse(data.memos);
+  });
+};
+
+// Chrome Storageのメモを更新
+const updateMemos = async () => {
+  await chrome.storage.sync.set({ memos: JSON.stringify(memoList.value) });
+};
+
+const isSearchTarget = (memo) => {
+  return searchText.value == null || memo.body.includes(searchText.value);
+};
+
+// 固定されているメモを先頭に配置する
 const sortMemos = () => {
-  const fixedMemoList: Memo[] = [];
-  const nonFixedMemoList: Memo[] = [];
+  const fixedMemoList = [];
+  const nonFixedMemoList = [];
   for (const memo of memoList.value) {
     if (memo.isPinned) {
       fixedMemoList.push(memo);
@@ -244,38 +247,46 @@ const sortMemos = () => {
   memoList.value = [...fixedMemoList, ...nonFixedMemoList];
 };
 
-const openMemo = (memo: Memo) => {
+const openMemo = (memo) => {
+  window.getSelection().removeAllRanges();
   editingIndex.value = memoList.value.indexOf(memo);
   isEditDialogOpened.value = true;
 };
 
 const handleCreateMemo = () => {
-  const newMemo: Memo = {
+  const newMemo = {
     isPinned: false,
-    color: memoList.value[memoList.value.length - 1].color,
+    color:
+      selectableColors[Math.floor(Math.random() * selectableColors.length)],
     body: "",
   };
   memoList.value.push(newMemo);
+  isMemoUpdated.value = true;
   openMemo(newMemo);
 };
 
-const handleCloseMemo = () => {
+const handleCloseMemo = async () => {
   isEditDialogOpened.value = false;
 
-  if (memoList.value[editingIndex.value].body == "") {
-    setTimeout(() => {
-      deleteMemo(editingIndex.value);
-    }, 200);
-  }
-
   if (isMemoUpdated.value) {
-    memoList.value.unshift(...deleteMemo(editingIndex.value));
-    sortMemos();
+    isMemoUpdated.value = false;
+
+    if (!memoList.value[editingIndex.value].body) {
+      // 時間をおいて実行しないとDialogが消えない
+      setTimeout(async () => {
+        deleteMemo(editingIndex.value);
+        await updateMemos();
+      }, 500);
+    } else {
+      memoList.value.unshift(...deleteMemo(editingIndex.value));
+      sortMemos();
+      await updateMemos();
+    }
   }
-  isMemoUpdated.value = false;
 };
 
-const handleOpenDeleteConfirm = (memo: Memo) => {
+// メモの削除確認Dialogを開く
+const handleOpenDeleteConfirm = (memo) => {
   deletingIndex.value = memoList.value.indexOf(memo);
   isDeleteDialogOpened.value = true;
 };
@@ -283,19 +294,22 @@ const handleOpenDeleteConfirm = (memo: Memo) => {
 const handleDeleteMemo = () => {
   isDeleteDialogOpened.value = false;
   isEditDialogOpened.value = false;
-  setTimeout(() => {
+
+  // 時間をおいて実行しないとDialogが消えない
+  setTimeout(async () => {
     deleteMemo(deletingIndex.value);
+    await updateMemos();
   }, 500);
 };
 
-const deleteMemo = (index: number) => {
+const deleteMemo = (index) => {
   return memoList.value.splice(index, 1);
 };
 
-const handleCopyToClipboard = (text: string, index: number = 0) => {
+const handleCopyToClipboard = (text, index = 0) => {
   navigator.clipboard.writeText(text);
 
-  let messageElement: HTMLElement;
+  let messageElement;
   if (isEditDialogOpened.value) {
     messageElement = document.getElementById("copied-message-opened");
   } else {
@@ -308,19 +322,24 @@ const handleCopyToClipboard = (text: string, index: number = 0) => {
   }, 2000);
 };
 
-const handleToggleMemoFix = (memo: Memo) => {
+const handleToggleMemoFix = async (memo) => {
   memo.isPinned = !memo.isPinned;
   sortMemos();
   if (isEditDialogOpened.value) {
     editingIndex.value = memoList.value.indexOf(memo);
   }
+  await updateMemos();
+};
+
+const handleChangeMemoColor = async (color) => {
+  memoList.value[editingIndex.value].color = color;
+  await updateMemos();
 };
 </script>
 
 <style lang="scss" scoped>
 .card {
   cursor: default;
-  user-select: none;
   .button-group {
     position: sticky;
     top: 0;
