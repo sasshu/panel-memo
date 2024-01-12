@@ -18,6 +18,7 @@
         placeholder="検索..."
         hide-details
         clearable
+        spellcheck="false"
       >
       </v-text-field>
     </v-app-bar>
@@ -99,7 +100,7 @@
           </v-tooltip>
         </v-btn>
       </div>
-      <v-card-text class="text-pre-wrap text-body-1 card-text">
+      <v-card-text class="text-pre-wrap text-body-2 card-text">
         {{ memo.body }}
       </v-card-text>
     </v-card>
@@ -275,7 +276,7 @@
           auto-grow
           rows="1"
           :bg-color="`${memoList[editingIndex].color}-lighten-4`"
-          class="memo-input px-3"
+          class="px-3"
           v-model="memoList[editingIndex].body"
           spellcheck="false"
           @update:model-value="
@@ -434,6 +435,10 @@ const handleChangeMemoColor = async (color) => {
 </script>
 
 <style lang="scss" scoped>
+.text-subtitle-1,
+.text-body-2 {
+  font-family: "Noto Sans JP", sans-serif !important;
+}
 .card {
   cursor: default;
   .button-group {
