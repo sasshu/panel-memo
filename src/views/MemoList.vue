@@ -1,11 +1,21 @@
 <template>
   <div class="pt-4 px-4 pb-16 h-100">
     <v-app-bar class="pr-2">
-      <v-btn icon="mdi-plus" size="large" @click="handleCreateMemo()"></v-btn>
+      <v-btn icon size="large" @click="handleCreateMemo()">
+        <v-icon icon="mdi-plus"></v-icon>
+        <v-tooltip
+          text="新規メモを作成"
+          activator="parent"
+          location="bottom"
+          open-delay="1000"
+        >
+        </v-tooltip>
+      </v-btn>
       <v-text-field
         v-model="searchText"
         density="compact"
         prepend-inner-icon="mdi-magnify"
+        placeholder="検索..."
         hide-details
         clearable
       >
@@ -31,34 +41,63 @@
     >
       <div class="float-right pt-2 pr-2 button-group">
         <v-btn
-          icon="mdi-delete-outline"
+          icon
           density="comfortable"
           variant="text"
           size="small"
           class="top-button"
           @click="handleOpenDeleteConfirm(memo)"
-        ></v-btn>
+        >
+          <v-icon icon="mdi-delete-outline"></v-icon>
+          <v-tooltip
+            text="削除"
+            activator="parent"
+            location="top"
+            open-delay="1000"
+          >
+          </v-tooltip>
+        </v-btn>
         <v-btn
-          icon="mdi-checkbox-multiple-blank-outline"
+          icon
           density="comfortable"
           variant="text"
           size="small"
           class="top-button"
-          @click="handleCopyToClipboard(memo.body, index)"
-        ></v-btn>
-        <span
-          class="text-body-2 font-weight-bold copied-message"
-          :id="`copied-message-${index}`"
-          >copied!</span
+          @click="handleCopyToClipboard(memo)"
+          :disabled="memo.isCopied"
         >
+          <v-icon icon>
+            {{
+              memo.isCopied
+                ? "mdi-check"
+                : "mdi-checkbox-multiple-blank-outline"
+            }}
+          </v-icon>
+          <v-tooltip
+            text="クリップボードにコピー"
+            activator="parent"
+            location="top"
+            open-delay="1000"
+          >
+          </v-tooltip>
+        </v-btn>
         <v-btn
-          :icon="memo.isPinned ? 'mdi-pin' : 'mdi-pin-outline'"
+          icon
           density="comfortable"
           variant="text"
           size="small"
           :class="{ 'top-button': !memo.isPinned }"
           @click="handleToggleMemoFix(memo)"
-        ></v-btn>
+        >
+          <v-icon>{{ memo.isPinned ? "mdi-pin" : "mdi-pin-outline" }}</v-icon>
+          <v-tooltip
+            :text="memo.isPinned ? '固定解除' : '固定'"
+            activator="parent"
+            location="top"
+            open-delay="1000"
+          >
+          </v-tooltip>
+        </v-btn>
       </div>
       <v-card-text class="text-pre-wrap text-body-1 card-text">
         {{ memo.body }}
@@ -66,13 +105,22 @@
     </v-card>
 
     <v-btn
-      icon="mdi-plus"
+      icon
       size="large"
       color="blue"
       class="plus-button"
       position="fixed"
       @click="handleCreateMemo()"
-    ></v-btn>
+    >
+      <v-icon icon="mdi-plus"></v-icon>
+      <v-tooltip
+        text="新規メモを作成"
+        activator="parent"
+        location="top"
+        open-delay="1000"
+      >
+      </v-tooltip>
+    </v-btn>
   </div>
   <!-- メモの削除確認Dialog -->
   <v-dialog v-model="isDeleteDialogOpened" width="90%">
@@ -88,14 +136,18 @@
       <v-card-actions>
         <v-spacer></v-spacer>
         <v-btn
+          text="キャンセル"
           color="primary"
           variant="text"
           @click="isDeleteDialogOpened = false"
         >
-          キャンセル
         </v-btn>
-        <v-btn color="red" variant="text" @click="handleDeleteMemo()">
-          削除
+        <v-btn
+          text="削除"
+          color="red"
+          variant="text"
+          @click="handleDeleteMemo()"
+        >
         </v-btn>
       </v-card-actions>
     </v-card>
@@ -114,12 +166,20 @@
       >
         <v-spacer></v-spacer>
         <v-btn
-          icon="mdi-palette-outline"
+          icon
           density="comfortable"
           variant="text"
           size="large"
           id="palette-activator"
         >
+          <v-icon icon="mdi-palette-outline"></v-icon>
+          <v-tooltip
+            text="色を変更"
+            activator="parent"
+            location="bottom"
+            open-delay="1000"
+          >
+          </v-tooltip>
         </v-btn>
         <v-menu activator="#palette-activator" width="100%">
           <v-list class="d-flex py-0">
@@ -139,26 +199,57 @@
           variant="text"
           size="large"
           @click="handleOpenDeleteConfirm(memoList[editingIndex])"
-        ></v-btn>
+        >
+          <v-icon icon="mdi-delete-outline"></v-icon>
+          <v-tooltip
+            text="削除"
+            activator="parent"
+            location="bottom"
+            open-delay="1000"
+          >
+          </v-tooltip>
+        </v-btn>
         <v-btn
-          icon="mdi-checkbox-multiple-blank-outline"
+          icon
           density="comfortable"
           variant="text"
           size="large"
-          @click="handleCopyToClipboard(memoList[editingIndex].body)"
-        ></v-btn>
-        <span class="text-body-2 font-weight-bold" id="copied-message-opened"
-          >copied!</span
+          @click="handleCopyToClipboard(memoList[editingIndex])"
+          :disabled="memoList[editingIndex].isCopied"
         >
+          <v-icon icon>
+            {{
+              memoList[editingIndex].isCopied
+                ? "mdi-check"
+                : "mdi-checkbox-multiple-blank-outline"
+            }}
+          </v-icon>
+          <v-tooltip
+            text="クリップボードにコピー"
+            activator="parent"
+            location="bottom"
+            open-delay="1000"
+          >
+          </v-tooltip>
+        </v-btn>
         <v-btn
-          :icon="
-            memoList[editingIndex].isPinned ? 'mdi-pin' : 'mdi-pin-outline'
-          "
+          icon
           density="comfortable"
           variant="text"
           size="large"
           @click="handleToggleMemoFix(memoList[editingIndex])"
-        ></v-btn>
+        >
+          <v-icon>{{
+            memoList[editingIndex].isPinned ? "mdi-pin" : "mdi-pin-outline"
+          }}</v-icon>
+          <v-tooltip
+            :text="memoList[editingIndex].isPinned ? '固定解除' : '固定'"
+            activator="parent"
+            location="bottom"
+            open-delay="1000"
+          >
+          </v-tooltip>
+        </v-btn>
         <v-btn
           icon="mdi-close"
           density="comfortable"
@@ -166,6 +257,14 @@
           size="large"
           @click="handleCloseMemo()"
         >
+          <v-icon icon="mdi-close"></v-icon>
+          <v-tooltip
+            text="閉じる"
+            activator="parent"
+            location="bottom"
+            open-delay="1000"
+          >
+          </v-tooltip>
         </v-btn>
       </v-toolbar>
       <v-container class="pa-0">
@@ -221,6 +320,9 @@ onMounted(async () => {
 const fetchMemos = async () => {
   await chrome.storage.sync.get("memos").then((data) => {
     memoList.value = JSON.parse(data.memos);
+    memoList.value.forEach((memo) => {
+      memo.isCopied = false;
+    });
   });
 };
 
@@ -259,6 +361,7 @@ const handleCreateMemo = () => {
     color:
       selectableColors[Math.floor(Math.random() * selectableColors.length)],
     body: "",
+    isCopied: false,
   };
   memoList.value.push(newMemo);
   isMemoUpdated.value = true;
@@ -306,19 +409,12 @@ const deleteMemo = (index) => {
   return memoList.value.splice(index, 1);
 };
 
-const handleCopyToClipboard = (text, index = 0) => {
-  navigator.clipboard.writeText(text);
+const handleCopyToClipboard = (memo) => {
+  memo.isCopied = true;
+  navigator.clipboard.writeText(memo.body);
 
-  let messageElement;
-  if (isEditDialogOpened.value) {
-    messageElement = document.getElementById("copied-message-opened");
-  } else {
-    messageElement = document.getElementById(`copied-message-${index}`);
-  }
-
-  messageElement.style.display = "block";
   setTimeout(() => {
-    messageElement.style.display = "none";
+    memo.isCopied = false;
   }, 2000);
 };
 
@@ -347,16 +443,14 @@ const handleChangeMemoColor = async (color) => {
     .top-button {
       opacity: 0;
     }
-    .copied-message {
-      display: none;
-      position: absolute;
-      top: -2px;
-      right: 26px;
-    }
   }
   .card-text {
     z-index: 1;
   }
+}
+
+.card::-webkit-scrollbar {
+  display: none;
 }
 .card:hover {
   outline: 2px solid darkgray;
@@ -391,11 +485,5 @@ const handleChangeMemoColor = async (color) => {
   position: sticky;
   top: 0;
   z-index: 10;
-  #copied-message-opened {
-    display: none;
-    position: absolute;
-    top: -2px;
-    right: 95px;
-  }
 }
 </style>
