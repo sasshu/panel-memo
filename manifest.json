@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "パネルメモ",
-  "description": "Chromeのサイドパネルで編集できるメモ帳",
-  "version": "1.0",
+  "description": "サイドパネルで編集できるメモ帳",
+  "version": "1.1",
   "icons": {
     "16": "src/assets/memo-editing_16.png",
     "48": "src/assets/memo-editing_48.png",
@@ -10,7 +10,7 @@
   },
   "permissions": ["sidePanel", "storage"],
   "action": {
-    "default_title": "Click to open panel",
+    "default_title": "パネルメモ",
     "default_icon": "src/assets/memo-editing_48.png"
   },
   "side_panel": {
