@@ -296,7 +296,7 @@ import { onMounted } from "vue";
 import { ref } from "vue";
 
 // メモの背景色
-const selectableColors = ["yellow", "green", "blue", "pink"];
+const selectableColors = ["yellow", "green", "blue", "pink", "blue-grey", "deep-orange"];
 
 // 全てのメモ
 const memoList = ref([]);
