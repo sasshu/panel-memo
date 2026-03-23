@@ -283,9 +283,7 @@
           class="px-3"
           v-model="openedMemo.body"
           spellcheck="false"
-          @update:model-value="
-            updateMemos();
-          "
+          @update:model-value="handleChangeMemoBody(openedMemo)"
         >
           {{ openedMemo.body }}</v-textarea
         >
@@ -311,6 +309,7 @@ const editIndex = ref();
 
 const isDeleteDialogOpened = ref(false);
 const isEditDialogOpened = ref(false);
+const isMemoUpdated = ref(false);
 
 onMounted(async () => {
   await fetchMemos();
@@ -340,7 +339,9 @@ const isSearchTarget = (memo) => {
   return searchText.value == null || memo.body.includes(searchText.value);
 };
 
-// 固定されているメモを先頭に配置する
+// メモをソートする
+// 1.固定メモ → 未固定メモ
+// 2.更新日時の降順
 const sortMemos = () => {
   const fixedMemoList = [];
   const nonFixedMemoList = [];
@@ -351,6 +352,18 @@ const sortMemos = () => {
       nonFixedMemoList.push(memo);
     }
   }
+
+  const compareModifiedAtDesc = (a, b) => {
+    const aAt = a?.modifiedAt ?? "";
+    const bAt = b?.modifiedAt ?? "";
+    if (aAt === bAt) return 0;
+    // 降順（新しい=大きい文字列が先）
+    return aAt < bAt ? 1 : -1;
+  };
+
+  fixedMemoList.sort(compareModifiedAtDesc);
+  nonFixedMemoList.sort(compareModifiedAtDesc);
+
   memoList.value = [...fixedMemoList, ...nonFixedMemoList];
   insertIndex.value = fixedMemoList.length;
 };
@@ -361,6 +374,25 @@ const openMemo = (index) => {
   isEditDialogOpened.value = true;
 };
 
+const handleChangeMemoBody = (memo) => {
+  isMemoUpdated.value = true;
+  memo.modifiedAt = dateToString(new Date());
+  updateMemos();
+}
+
+// `yyyyMMddHHmmssSSS` 形式の日時文字列を作る
+const dateToString = (date) => {
+  const pad = (number, length) => String(number).padStart(length, "0");
+  const yyyy = date.getFullYear();
+  const mm = pad(date.getMonth() + 1, 2);
+  const dd = pad(date.getDate(), 2);
+  const hh = pad(date.getHours(), 2);
+  const min = pad(date.getMinutes(), 2);
+  const ss = pad(date.getSeconds(), 2);
+  const ms = pad(date.getMilliseconds(), 3);
+  return `${yyyy}${mm}${dd}${hh}${min}${ss}${ms}`;
+};
+
 const handleCreateMemo = () => {
   const newMemo = {
     isPinned: false,
@@ -368,20 +400,22 @@ const handleCreateMemo = () => {
       selectableColors[Math.floor(Math.random() * selectableColors.length)],
     body: ""
   };
-  if (memoList.value.length === 0) {
-    memoList.value.push(newMemo);
-  } else {
-    memoList.value.splice(insertIndex.value, 0, newMemo);
-  }
-  openMemo(insertIndex.value);
+  openMemo(memoList.value.push(newMemo) - 1);
 };
 
 const handleCloseMemo = () => {
   isEditDialogOpened.value = false;
   if (!memoList.value[editIndex.value].body) {
+    // 本文が空の場合は削除
     memoList.value.splice(editIndex.value, 1);
+    updateMemos();
   }
-  updateMemos();
+  if (isMemoUpdated.value) {
+    // 本文が更新されている場合は再ソート
+    sortMemos();
+    updateMemos();
+    isMemoUpdated.value = false;
+  }
 };
 
 // メモの削除確認Dialogを開く
