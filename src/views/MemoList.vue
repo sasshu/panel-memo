@@ -295,7 +295,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from "vue";
+import { ref, computed, onMounted } from "vue";
 
 // メモの背景色
 const selectableColors = ["yellow", "green", "blue", "pink", "blue-grey", "deep-orange"];
@@ -312,17 +312,10 @@ const editIndex = ref();
 const isDeleteDialogOpened = ref(false);
 const isEditDialogOpened = ref(false);
 
-// メモのbody（テキスト）が更新されたらTrueに切り替わる
-const isMemoUpdated = ref(false);
-
 onMounted(async () => {
   await fetchMemos();
   sortMemos();
 });
-
-// onBeforeUnmount(() => {
-//   updateMemos();
-// });
 
 const openedMemo = computed(() => {
   if (isEditDialogOpened.value) {
@@ -335,9 +328,6 @@ const openedMemo = computed(() => {
 const fetchMemos = async () => {
   await chrome.storage.sync.get("memos").then((data) => {
     memoList.value = JSON.parse(data?.memos).filter((memo) => memo.body);
-    memoList.value.forEach((memo) => {
-      memo.isCopied = false;
-    });
   });
 };
 
@@ -376,8 +366,7 @@ const handleCreateMemo = () => {
     isPinned: false,
     color:
       selectableColors[Math.floor(Math.random() * selectableColors.length)],
-    body: "",
-    isCopied: false,
+    body: ""
   };
   if (memoList.value.length === 0) {
     memoList.value.push(newMemo);
@@ -416,7 +405,7 @@ const handleCopyToClipboard = (memo) => {
   navigator.clipboard.writeText(memo.body);
 
   setTimeout(() => {
-    memo.isCopied = false;
+    delete memo.isCopied;
   }, 2000);
 };
 
