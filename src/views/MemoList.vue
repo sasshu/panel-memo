@@ -407,7 +407,10 @@ const handleCloseMemo = () => {
   isEditDialogOpened.value = false;
   if (!memoList.value[editIndex.value].body) {
     // 本文が空の場合は削除
-    memoList.value.splice(editIndex.value, 1);
+    const blankMemo = memoList.value.splice(editIndex.value, 1)[0];
+    if (blankMemo.isPinned) {
+      insertIndex.value--;
+    }
     updateMemos();
   }
   if (isMemoUpdated.value) {
