@@ -335,7 +335,7 @@ const openedMemo = computed(() => {
 // Chrome Storageからメモを取得
 const fetchMemos = async () => {
   await chrome.storage.sync.get("memos").then((data) => {
-    memoList.value = JSON.parse(data.memos);
+    memoList.value = JSON.parse(data?.memos);
     memoList.value.forEach((memo) => {
       memo.isCopied = false;
     });
