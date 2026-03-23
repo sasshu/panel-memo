@@ -284,7 +284,6 @@
           v-model="openedMemo.body"
           spellcheck="false"
           @update:model-value="
-            isMemoUpdated = true;
             updateMemos();
           "
         >
@@ -321,12 +320,12 @@ onMounted(async () => {
   sortMemos();
 });
 
-onBeforeUnmount(() => {
-  updateMemos();
-});
+// onBeforeUnmount(() => {
+//   updateMemos();
+// });
 
 const openedMemo = computed(() => {
-  if (isEditDialogOpened) {
+  if (isEditDialogOpened.value) {
     return memoList.value[editIndex.value];
   }
   return null;
@@ -335,7 +334,7 @@ const openedMemo = computed(() => {
 // Chrome Storageからメモを取得
 const fetchMemos = async () => {
   await chrome.storage.sync.get("memos").then((data) => {
-    memoList.value = JSON.parse(data?.memos);
+    memoList.value = JSON.parse(data?.memos).filter((memo) => memo.body);
     memoList.value.forEach((memo) => {
       memo.isCopied = false;
     });
@@ -385,17 +384,15 @@ const handleCreateMemo = () => {
   } else {
     memoList.value.splice(insertIndex.value, 0, newMemo);
   }
-  isMemoUpdated.value = true;
   openMemo(insertIndex.value);
 };
 
 const handleCloseMemo = () => {
   isEditDialogOpened.value = false;
-  if (isMemoUpdated.value && !memoList.value[editIndex.value].body) {
+  if (!memoList.value[editIndex.value].body) {
     memoList.value.splice(editIndex.value, 1);
   }
   updateMemos();
-  isMemoUpdated.value = false;
 };
 
 // メモの削除確認Dialogを開く
