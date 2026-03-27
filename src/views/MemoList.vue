@@ -1,138 +1,249 @@
 <template>
-  <div class="pt-4 px-4 pb-16 h-100">
-    <v-app-bar class="pr-2">
-      <v-btn icon size="large" @click="handleCreateMemo()">
+  <div class="memo-list-root" :style="memoFontCssVar">
+    <div
+      class="memo-list-inner pt-4 px-4 pb-16"
+      :class="{ 'd-flex flex-column': !memoList.length }"
+    >
+      <v-app-bar>
+        <v-btn icon size="large" @click="handleCreateMemo()">
+          <v-icon icon="mdi-plus"></v-icon>
+          <v-tooltip
+            text="新規メモを作成"
+            activator="parent"
+            location="bottom"
+            open-delay="1000"
+          >
+          </v-tooltip>
+        </v-btn>
+        <v-text-field
+          v-model="searchText"
+          density="compact"
+          prepend-inner-icon="mdi-magnify"
+          placeholder="検索..."
+          hide-details
+          clearable
+          spellcheck="false"
+        >
+        </v-text-field>
+        <v-btn icon size="large" @click="handleOpenConfig()">
+          <v-icon icon="mdi-cog"></v-icon>
+          <v-tooltip
+            text="設定"
+            activator="parent"
+            location="bottom"
+            open-delay="1000"
+          >
+          </v-tooltip>
+        </v-btn>
+      </v-app-bar>
+      <div
+        v-if="!memoList.length"
+        class="flex-grow-1 d-flex align-center justify-center min-h-0"
+      >
+        <div class="bg-memolist-wrap">
+          <v-img
+            width="100%"
+            src="../assets/bg-memolist.svg"
+            style="opacity: 0.5"
+          ></v-img>
+        </div>
+      </div>
+      <v-card
+        v-for="(memo, index) in memoList"
+        :key="index"
+        :class="`mb-3 overflow-auto card`"
+        :color="`${memo.color}-lighten-4`"
+        elevation="4"
+        max-height="200px"
+        @dblclick="openMemo(index)"
+        v-show="isSearchTarget(memo)"
+      >
+        <div class="float-right pt-2 pr-2 button-group">
+          <v-btn
+            icon
+            density="comfortable"
+            variant="text"
+            size="small"
+            class="top-button"
+            @click="handleOpenDeleteConfirm(index)"
+          >
+            <v-icon icon="mdi-delete-outline"></v-icon>
+            <v-tooltip
+              text="削除"
+              activator="parent"
+              location="top"
+              open-delay="1000"
+            >
+            </v-tooltip>
+          </v-btn>
+          <v-btn
+            icon
+            density="comfortable"
+            variant="text"
+            size="small"
+            class="top-button"
+            @click="handleCopyToClipboard(memo)"
+            :disabled="memo.isCopied"
+          >
+            <v-icon icon>
+              {{
+                memo.isCopied
+                  ? "mdi-check"
+                  : "mdi-checkbox-multiple-blank-outline"
+              }}
+            </v-icon>
+            <v-tooltip
+              text="クリップボードにコピー"
+              activator="parent"
+              location="top"
+              open-delay="1000"
+            >
+            </v-tooltip>
+          </v-btn>
+          <v-btn
+            icon
+            density="comfortable"
+            variant="text"
+            size="small"
+            :class="{ 'top-button': !memo.isPinned }"
+            @click="handleToggleMemoFix(memo)"
+          >
+            <v-icon>{{ memo.isPinned ? "mdi-pin" : "mdi-pin-outline" }}</v-icon>
+            <v-tooltip
+              :text="memo.isPinned ? '固定解除' : '固定'"
+              activator="parent"
+              location="top"
+              open-delay="1000"
+            >
+            </v-tooltip>
+          </v-btn>
+        </div>
+        <v-card-text class="text-pre-wrap text text-memo card-text">
+          {{ memo.body }}
+        </v-card-text>
+      </v-card>
+
+      <v-btn
+        icon
+        size="large"
+        color="blue"
+        class="plus-button"
+        position="fixed"
+        @click="handleCreateMemo()"
+      >
         <v-icon icon="mdi-plus"></v-icon>
         <v-tooltip
           text="新規メモを作成"
           activator="parent"
-          location="bottom"
+          location="top"
           open-delay="1000"
         >
         </v-tooltip>
       </v-btn>
-      <v-text-field
-        v-model="searchText"
-        density="compact"
-        prepend-inner-icon="mdi-magnify"
-        placeholder="検索..."
-        hide-details
-        clearable
-        spellcheck="false"
-      >
-      </v-text-field>
-    </v-app-bar>
-    <v-img
-      v-if="!memoList.length"
-      width="50%"
-      height="100%"
-      src="../assets/bg-memolist.svg"
-      style="opacity: 0.5"
-      class="mx-auto"
-    ></v-img>
-    <v-card
-      v-for="(memo, index) in memoList"
-      :key="index"
-      :class="`mb-3 overflow-auto card`"
-      :color="`${memo.color}-lighten-4`"
-      elevation="4"
-      max-height="200px"
-      @dblclick="openMemo(memo)"
-      v-show="isSearchTarget(memo)"
-    >
-      <div class="float-right pt-2 pr-2 button-group">
-        <v-btn
-          icon
-          density="comfortable"
-          variant="text"
-          size="small"
-          class="top-button"
-          @click="handleOpenDeleteConfirm(memo)"
-        >
-          <v-icon icon="mdi-delete-outline"></v-icon>
-          <v-tooltip
-            text="削除"
-            activator="parent"
-            location="top"
-            open-delay="1000"
-          >
-          </v-tooltip>
-        </v-btn>
-        <v-btn
-          icon
-          density="comfortable"
-          variant="text"
-          size="small"
-          class="top-button"
-          @click="handleCopyToClipboard(memo)"
-          :disabled="memo.isCopied"
-        >
-          <v-icon icon>
-            {{
-              memo.isCopied
-                ? "mdi-check"
-                : "mdi-checkbox-multiple-blank-outline"
-            }}
-          </v-icon>
-          <v-tooltip
-            text="クリップボードにコピー"
-            activator="parent"
-            location="top"
-            open-delay="1000"
-          >
-          </v-tooltip>
-        </v-btn>
-        <v-btn
-          icon
-          density="comfortable"
-          variant="text"
-          size="small"
-          :class="{ 'top-button': !memo.isPinned }"
-          @click="handleToggleMemoFix(memo)"
-        >
-          <v-icon>{{ memo.isPinned ? "mdi-pin" : "mdi-pin-outline" }}</v-icon>
-          <v-tooltip
-            :text="memo.isPinned ? '固定解除' : '固定'"
-            activator="parent"
-            location="top"
-            open-delay="1000"
-          >
-          </v-tooltip>
-        </v-btn>
-      </div>
-      <v-card-text class="text-pre-wrap text-body-2 card-text">
-        {{ memo.body }}
-      </v-card-text>
-    </v-card>
-
-    <v-btn
-      icon
-      size="large"
-      color="blue"
-      class="plus-button"
-      position="fixed"
-      @click="handleCreateMemo()"
-    >
-      <v-icon icon="mdi-plus"></v-icon>
-      <v-tooltip
-        text="新規メモを作成"
-        activator="parent"
-        location="top"
-        open-delay="1000"
-      >
-      </v-tooltip>
-    </v-btn>
+    </div>
   </div>
+
+  <!-- 設定画面 -->
+  <v-dialog v-model="isConfigDialogOpened" fullscreen>
+    <v-card
+      class="config-dialog-card d-flex flex-column"
+      :style="draftConfigCardStyle"
+    >
+      <v-toolbar density="comfortable" elevation="1">
+        <v-toolbar-title>設定</v-toolbar-title>
+        <v-spacer></v-spacer>
+        <v-btn
+          icon
+          density="comfortable"
+          variant="text"
+          size="large"
+          @click="isConfigDialogOpened = false"
+        >
+          <v-icon icon="mdi-close"></v-icon>
+          <v-tooltip
+            text="閉じる"
+            activator="parent"
+            location="bottom"
+            open-delay="1000"
+          >
+          </v-tooltip>
+        </v-btn>
+      </v-toolbar>
+      <v-card-text class="flex-grow-1 overflow-auto">
+        <div class="text-subtitle-1 font-weight-bold mb-2">メモの同期</div>
+        <p class="text text-body-2 text-medium-emphasis mb-3">
+          同期すると同じGoogleアカウントを使用し、複数の端末で同じメモを閲覧・編集できます。<br>
+          同期しない場合はこのブラウザ・この端末のみでメモが保存されます。<br>
+          同期しない方がより多くのメモを保存できます。
+        </p>
+        <div class="config-toggle-wrap mb-8">
+          <v-btn-toggle
+            v-model="draftStorageMode"
+            mandatory
+            divided
+            variant="outlined"
+            color="primary"
+            class="config-toggle"
+          >
+            <v-btn value="local" class="text-none flex-grow-1">同期しない</v-btn>
+            <v-btn value="sync" class="text-none flex-grow-1">同期する</v-btn>
+          </v-btn-toggle>
+        </div>
+
+        <div class="text-subtitle-1 font-weight-bold mb-2">メモの文字サイズ</div>
+        <div class="config-toggle-wrap">
+          <v-btn-toggle
+            v-model="draftFontSizeStep"
+            mandatory
+            divided
+            variant="outlined"
+            color="primary"
+            class="config-toggle"
+          >
+            <v-btn :value="0" class="text-none flex-grow-1">小</v-btn>
+            <v-btn :value="1" class="text-none flex-grow-1">中</v-btn>
+            <v-btn :value="2" class="text-none flex-grow-1">大</v-btn>
+          </v-btn-toggle>
+        </div>
+        <p class="text text-draft mt-2">
+          文字サイズはこのくらいです。<br>
+          The font size is about this big.
+        </p>
+      </v-card-text>
+      <v-divider></v-divider>
+      <v-card-actions class="pa-4">
+        <v-btn 
+          variant="text"
+          color="primary"
+          @click="isConfigDialogOpened = false"
+        >
+          キャンセル
+        </v-btn>
+        <v-spacer></v-spacer>
+        <v-btn
+          color="primary"
+          variant="flat"
+          @click="handleSaveConfig"
+        >
+          保存する
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
+
   <!-- メモの削除確認Dialog -->
   <v-dialog v-model="isDeleteDialogOpened" width="90%">
-    <v-card class="rounded-lg">
-      <v-card-title class="text-pre-wrap text-subtitle-1 font-weight-bold">
+    <v-card
+      v-if="memoList[deleteIndex] != null"
+      class="rounded-lg"
+    >
+      <v-card-title class="text-pre-wrap text text-subtitle-1 font-weight-bold">
         以下のメモを削除しますか？
       </v-card-title>
       <v-card-text
-        class="text-pre-wrap text-body-2 pt-0 pb-3 overflow-hidden deleting-text"
+        class="text-pre-wrap text text-body-2 pt-0 pb-3 overflow-hidden deleting-text"
       >
-        {{ memoList[deletingIndex].body }}
+        {{ memoList[deleteIndex].body }}
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
@@ -153,17 +264,24 @@
       </v-card-actions>
     </v-card>
   </v-dialog>
+
   <!-- メモ編集画面 -->
-  <v-dialog v-model="isEditDialogOpened" fullscreen>
+  <v-dialog
+    v-model="isEditDialogOpened"
+    fullscreen
+    @update:model-value="handleCloseMemo()"
+  >
     <v-card
-      :color="`${memoList[editingIndex].color}-lighten-4`"
-      v-model="memoList[editingIndex]"
+      v-if="openedMemo != null"
+      :color="`${openedMemo.color}-lighten-4`"
+      v-model="openedMemo"
+      :style="memoFontCssVar"
     >
       <v-toolbar
         density="comfortable"
         class="editing-toolbar"
         elevation="1"
-        :color="`${memoList[editingIndex].color}-lighten-5`"
+        :color="`${openedMemo.color}-lighten-5`"
       >
         <v-spacer></v-spacer>
         <v-btn
@@ -185,11 +303,11 @@
         <v-menu activator="#palette-activator" width="100%">
           <v-list class="d-flex py-0">
             <v-list-item
-              v-for="color in selectableColors"
+              v-for="color in SELECTABLE_COLORS"
               :key="color"
               :value="color"
               :class="`bg-${color}-lighten-4 flex-grow-1`"
-              @click="handleChangeMemoColor(color)"
+              @click="handleChangeMemoColor(editIndex, color)"
             >
             </v-list-item>
           </v-list>
@@ -199,7 +317,7 @@
           density="comfortable"
           variant="text"
           size="large"
-          @click="handleOpenDeleteConfirm(memoList[editingIndex])"
+          @click="handleOpenDeleteConfirm(editIndex)"
         >
           <v-icon icon="mdi-delete-outline"></v-icon>
           <v-tooltip
@@ -215,12 +333,12 @@
           density="comfortable"
           variant="text"
           size="large"
-          @click="handleCopyToClipboard(memoList[editingIndex])"
-          :disabled="memoList[editingIndex].isCopied"
+          @click="handleCopyToClipboard(openedMemo)"
+          :disabled="openedMemo.isCopied"
         >
           <v-icon icon>
             {{
-              memoList[editingIndex].isCopied
+              openedMemo.isCopied
                 ? "mdi-check"
                 : "mdi-checkbox-multiple-blank-outline"
             }}
@@ -238,13 +356,13 @@
           density="comfortable"
           variant="text"
           size="large"
-          @click="handleToggleMemoFix(memoList[editingIndex])"
+          @click="handleToggleMemoFix(openedMemo)"
         >
           <v-icon>{{
-            memoList[editingIndex].isPinned ? "mdi-pin" : "mdi-pin-outline"
+            openedMemo.isPinned ? "mdi-pin" : "mdi-pin-outline"
           }}</v-icon>
           <v-tooltip
-            :text="memoList[editingIndex].isPinned ? '固定解除' : '固定'"
+            :text="openedMemo.isPinned ? '固定解除' : '固定'"
             activator="parent"
             location="bottom"
             open-delay="1000"
@@ -275,68 +393,141 @@
           hide-details="auto"
           auto-grow
           rows="1"
-          :bg-color="`${memoList[editingIndex].color}-lighten-4`"
-          class="px-3"
-          v-model="memoList[editingIndex].body"
+          :bg-color="`${openedMemo.color}-lighten-4`"
+          class="px-3 text memo-edit-textarea "
+          v-model="openedMemo.body"
           spellcheck="false"
-          @update:model-value="
-            isMemoUpdated = true;
-            updateMemos();
-          "
+          @update:model-value="handleChangeMemoBody(openedMemo)"
         >
-          {{ memoList[editingIndex].body }}</v-textarea
+          {{ openedMemo.body }}</v-textarea
         >
       </v-container>
     </v-card>
   </v-dialog>
+
+  <v-snackbar
+    :model-value="hasStorageError"
+    :timeout="2000"
+    location="top"
+    color="error"
+    variant="flat"
+    text="メモの保存に失敗しました。設定で「同期しない」を選ぶか、メモを減らしてください。"
+    class="text"
+    @update:model-value="onStorageErrorSnackbarModel"
+  >
+  </v-snackbar>
 </template>
 
 <script setup>
-import { onMounted } from "vue";
-import { ref } from "vue";
+import { ref, computed, onMounted } from "vue";
 
-// メモの背景色
-const selectableColors = ["yellow", "green", "blue", "pink"];
+const KEY_CONFIG = "config"
+const KEY_MEMO = "memos"
+const SELECTABLE_COLORS = ["yellow", "green", "blue", "pink", "blue-grey", "deep-orange"];
+
+// メモの保存先: local = chrome.storage.local, sync = chrome.storage.sync
+const storageMode = ref("sync");
+// メモ本文の文字サイズ 0=小, 1=中, 2=大
+const fontSizeStep = ref(1);
+
+const draftStorageMode = ref("sync");
+const draftFontSizeStep = ref(1);
+
+const MEMO_FONT_SIZES = ["0.8125rem", "0.875rem", "1.0625rem"];
+
+const memoFontCssVar = computed(() => ({
+  "--memo-font-size": MEMO_FONT_SIZES[fontSizeStep.value]
+}));
+
+const draftConfigCardStyle = computed(() => ({
+  "--memo-font-size-draft": MEMO_FONT_SIZES[draftFontSizeStep.value]
+}));
 
 // 全てのメモ
 const memoList = ref([]);
 
 const searchText = ref("");
 
+const insertIndex = ref(0);
+const deleteIndex = ref();
+const editIndex = ref();
+
 const isDeleteDialogOpened = ref(false);
-const deletingIndex = ref();
-
 const isEditDialogOpened = ref(false);
-const editingIndex = ref();
-
-// メモのbody（テキスト）が更新されたらTrueに切り替わる
+const isConfigDialogOpened = ref(false);
 const isMemoUpdated = ref(false);
 
+const hasStorageError = ref(false);
+
 onMounted(async () => {
-  await fetchMemos();
-  sortMemos();
+  await loadConfig();
+  await loadMemos();
 });
 
-// Chrome Storageからメモを取得
-const fetchMemos = async () => {
-  await chrome.storage.sync.get("memos").then((data) => {
-    memoList.value = JSON.parse(data.memos);
-    memoList.value.forEach((memo) => {
-      memo.isCopied = false;
-    });
+// Storageから設定情報を取得
+const loadConfig = async () => {
+  const data = await chrome.storage?.sync.get(KEY_CONFIG);
+  if (data?.[KEY_CONFIG]) {
+    const config = JSON.parse(data?.[KEY_CONFIG]);
+    storageMode.value = config.storageMode;
+    fontSizeStep.value = config.fontSizeStep;
+  } else {
+    // 設定情報がない場合は初期値で設定を保存
+    await updateConfig();
+    handleOpenConfig();
+  }
+};
+
+// Storageの設定を更新
+const updateConfig = async () => {
+  await chrome.storage?.sync.set({
+    [KEY_CONFIG]: JSON.stringify({
+      storageMode: storageMode.value,
+      fontSizeStep: fontSizeStep.value,
+    })
   });
 };
 
-// Chrome Storageのメモを更新
-const updateMemos = async () => {
-  await chrome.storage.sync.set({ memos: JSON.stringify(memoList.value) });
+// Storageからメモを取得
+const loadMemos = async () => {
+  const data = await chrome.storage?.[storageMode.value].get(KEY_MEMO);
+  memoList.value = data?.[KEY_MEMO]
+    ? JSON.parse(data?.[KEY_MEMO]).filter((memo) => memo.body)
+    : [];
+  sortMemos();
 };
+
+// Storageのメモを更新
+const updateMemos = async (mode = storageMode.value) => {
+  try {
+    await chrome.storage?.[mode].set({
+      [KEY_MEMO]: JSON.stringify(memoList.value)
+    });
+  } catch (error) {
+    hasStorageError.value = true;
+  }
+};
+
+const onStorageErrorSnackbarModel = (open) => {
+  if (!open) {
+    hasStorageError.value = false;
+  }
+};
+
+const openedMemo = computed(() => {
+  if (isEditDialogOpened.value) {
+    return memoList.value[editIndex.value];
+  }
+  return null;
+});
 
 const isSearchTarget = (memo) => {
   return searchText.value == null || memo.body.includes(searchText.value);
 };
 
-// 固定されているメモを先頭に配置する
+// メモをソートする
+// 1.固定メモ → 未固定メモ
+// 2.更新日時の降順
 const sortMemos = () => {
   const fixedMemoList = [];
   const nonFixedMemoList = [];
@@ -347,67 +538,105 @@ const sortMemos = () => {
       nonFixedMemoList.push(memo);
     }
   }
+
+  const compareModifiedAtDesc = (a, b) => {
+    const aAt = a?.modifiedAt ?? "";
+    const bAt = b?.modifiedAt ?? "";
+    if (aAt === bAt) return 0;
+    // 降順（新しい=大きい文字列が先）
+    return aAt < bAt ? 1 : -1;
+  };
+
+  fixedMemoList.sort(compareModifiedAtDesc);
+  nonFixedMemoList.sort(compareModifiedAtDesc);
+
   memoList.value = [...fixedMemoList, ...nonFixedMemoList];
+  insertIndex.value = fixedMemoList.length;
 };
 
-const openMemo = (memo) => {
+const openMemo = (index) => {
   window.getSelection().removeAllRanges();
-  editingIndex.value = memoList.value.indexOf(memo);
+  editIndex.value = index;
   isEditDialogOpened.value = true;
+};
+
+const handleChangeMemoBody = async (memo) => {
+  isMemoUpdated.value = true;
+  memo.modifiedAt = dateToString(new Date());
+  await updateMemos();
+}
+
+// `yyyyMMddHHmmssSSS` 形式の日時文字列を作る
+const dateToString = (date) => {
+  const pad = (number, length) => String(number).padStart(length, "0");
+  const yyyy = date.getFullYear();
+  const mm = pad(date.getMonth() + 1, 2);
+  const dd = pad(date.getDate(), 2);
+  const hh = pad(date.getHours(), 2);
+  const min = pad(date.getMinutes(), 2);
+  const ss = pad(date.getSeconds(), 2);
+  const ms = pad(date.getMilliseconds(), 3);
+  return `${yyyy}${mm}${dd}${hh}${min}${ss}${ms}`;
 };
 
 const handleCreateMemo = () => {
   const newMemo = {
     isPinned: false,
     color:
-      selectableColors[Math.floor(Math.random() * selectableColors.length)],
-    body: "",
-    isCopied: false,
+      SELECTABLE_COLORS[Math.floor(Math.random() * SELECTABLE_COLORS.length)],
+    body: ""
   };
-  memoList.value.push(newMemo);
-  isMemoUpdated.value = true;
-  openMemo(newMemo);
+  openMemo(memoList.value.push(newMemo) - 1);
 };
 
 const handleCloseMemo = async () => {
   isEditDialogOpened.value = false;
-
-  if (isMemoUpdated.value) {
-    isMemoUpdated.value = false;
-
-    if (!memoList.value[editingIndex.value].body) {
-      // 時間をおいて実行しないとDialogが消えない
-      setTimeout(async () => {
-        deleteMemo(editingIndex.value);
-        await updateMemos();
-      }, 500);
-    } else {
-      memoList.value.unshift(...deleteMemo(editingIndex.value));
-      sortMemos();
-      await updateMemos();
+  if (!memoList.value[editIndex.value].body) {
+    // 本文が空の場合は削除
+    const blankMemo = memoList.value.splice(editIndex.value, 1)[0];
+    if (blankMemo.isPinned) {
+      insertIndex.value--;
     }
+    await updateMemos();
+  }
+  if (isMemoUpdated.value) {
+    // 本文が更新されている場合は再ソート
+    sortMemos();
+    await updateMemos();
+    isMemoUpdated.value = false;
   }
 };
 
+const handleOpenConfig = () => {
+  draftStorageMode.value = storageMode.value;
+  draftFontSizeStep.value = fontSizeStep.value;
+  isConfigDialogOpened.value = true;
+};
+
+const handleSaveConfig = async () => {
+  storageMode.value = draftStorageMode.value;
+  fontSizeStep.value = draftFontSizeStep.value;
+
+  await updateConfig();
+  await updateMemos();
+
+  isConfigDialogOpened.value = false;
+};
+
 // メモの削除確認Dialogを開く
-const handleOpenDeleteConfirm = (memo) => {
-  deletingIndex.value = memoList.value.indexOf(memo);
+const handleOpenDeleteConfirm = (index) => {
+  deleteIndex.value = index;
   isDeleteDialogOpened.value = true;
 };
 
-const handleDeleteMemo = () => {
+const handleDeleteMemo = async () => {
   isDeleteDialogOpened.value = false;
   isEditDialogOpened.value = false;
-
-  // 時間をおいて実行しないとDialogが消えない
-  setTimeout(async () => {
-    deleteMemo(deletingIndex.value);
-    await updateMemos();
-  }, 500);
-};
-
-const deleteMemo = (index) => {
-  return memoList.value.splice(index, 1);
+  if (memoList.value[deleteIndex.value].isPinned) {
+    insertIndex.value--;
+  }
+  memoList.value.splice(deleteIndex.value, 1);
+  await updateMemos();
 };
 
 const handleCopyToClipboard = (memo) => {
@@ -415,7 +644,7 @@ const handleCopyToClipboard = (memo) => {
   navigator.clipboard.writeText(memo.body);
 
   setTimeout(() => {
-    memo.isCopied = false;
+    delete memo.isCopied;
   }, 2000);
 };
 
@@ -423,22 +652,37 @@ const handleToggleMemoFix = async (memo) => {
   memo.isPinned = !memo.isPinned;
   sortMemos();
   if (isEditDialogOpened.value) {
-    editingIndex.value = memoList.value.indexOf(memo);
+    editIndex.value = memoList.value.indexOf(memo);
   }
   await updateMemos();
 };
 
-const handleChangeMemoColor = async (color) => {
-  memoList.value[editingIndex.value].color = color;
+const handleChangeMemoColor = async (index, color) => {
+  memoList.value[index].color = color;
   await updateMemos();
 };
 </script>
 
 <style lang="scss" scoped>
-.text-subtitle-1,
-.text-body-2 {
-  font-family: "Noto Sans JP", sans-serif !important;
+.memo-list-root {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  height: 100%;
+  min-height: 0;
 }
+
+.memo-list-inner {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.bg-memolist-wrap {
+  flex: 0 0 50%;
+  width: 50%;
+  max-width: 50%;
+}
+
 .card {
   cursor: default;
   .button-group {
@@ -483,12 +727,47 @@ const handleChangeMemoColor = async (color) => {
   height: 122px;
   display: -webkit-box;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 6;
+  line-clamp: 6;
 }
 
 .editing-toolbar {
   position: sticky;
   top: 0;
   z-index: 10;
+}
+
+.config-toggle-wrap {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.config-toggle {
+  flex: 0 1 480px;
+  width: 100%;
+  max-width: 480px;
+  min-width: 0;
+}
+
+.config-toggle :deep(.v-btn) {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.config-dialog-card {
+  min-height: 100%;
+}
+
+.text {
+  font-family: "Noto Sans JP", sans-serif !important;
+}
+
+.text-memo,
+.memo-edit-textarea :deep(.v-field__input) {
+  font-size: var(--memo-font-size, 0.875rem) !important;
+}
+
+.text-draft {
+  font-size: var(--memo-font-size-draft, 0.875rem) !important;
 }
 </style>
