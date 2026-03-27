@@ -8,7 +8,11 @@
     "48": "memo-editing_48.png",
     "128": "memo-editing_128.png"
   },
-  "permissions": ["sidePanel", "storage"],
+  "permissions": [
+    "sidePanel",
+    "storage",
+    "unlimitedStorage"
+  ],
   "action": {
     "default_title": "パネルメモ",
     "default_icon": "memo-editing_48.png"
