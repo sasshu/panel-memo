@@ -219,6 +219,7 @@
         >
           キャンセル
         </v-btn>
+        <v-spacer></v-spacer>
         <v-btn
           color="primary"
           variant="flat"
