@@ -1,6 +1,9 @@
 <template>
   <div class="memo-list-root" :style="memoFontCssVar">
-    <div class="pt-4 px-4 pb-16 h-100">
+    <div
+      class="memo-list-inner pt-4 px-4 pb-16"
+      :class="{ 'd-flex flex-column': !memoList.length }"
+    >
       <v-app-bar>
         <v-btn icon size="large" @click="handleCreateMemo()">
           <v-icon icon="mdi-plus"></v-icon>
@@ -33,14 +36,18 @@
           </v-tooltip>
         </v-btn>
       </v-app-bar>
-      <v-img
+      <div
         v-if="!memoList.length"
-        width="50%"
-        height="100%"
-        src="../assets/bg-memolist.svg"
-        style="opacity: 0.5"
-        class="mx-auto"
-      ></v-img>
+        class="flex-grow-1 d-flex align-center justify-center min-h-0"
+      >
+        <div class="bg-memolist-wrap">
+          <v-img
+            width="100%"
+            src="../assets/bg-memolist.svg"
+            style="opacity: 0.5"
+          ></v-img>
+        </div>
+      </div>
       <v-card
         v-for="(memo, index) in memoList"
         :key="index"
@@ -150,7 +157,7 @@
           density="comfortable"
           variant="text"
           size="large"
-          @click="handleCancelConfig"
+          @click="isConfigDialogOpened = false"
         >
           <v-icon icon="mdi-close"></v-icon>
           <v-tooltip
@@ -205,12 +212,20 @@
       </v-card-text>
       <v-divider></v-divider>
       <v-card-actions class="pa-4">
-        <v-btn variant="text" color="primary" @click="handleCancelConfig">
+        <v-btn 
+          variant="text"
+          color="primary"
+          @click="isConfigDialogOpened = false"
+        >
           キャンセル
         </v-btn>
         <v-spacer></v-spacer>
-        <v-btn color="primary" variant="flat" @click="handleSaveConfig">
-          設定を変更する
+        <v-btn
+          color="primary"
+          variant="flat"
+          @click="handleSaveConfig"
+        >
+          保存する
         </v-btn>
       </v-card-actions>
     </v-card>
@@ -434,14 +449,15 @@ const isMemoUpdated = ref(false);
 // Storageから設定情報を取得
 const loadConfig = async () => {
   const data = await chrome.storage?.sync.get(KEY_CONFIG);
-  const config = data?.[KEY_CONFIG]
-    ? JSON.parse(data?.[KEY_CONFIG])
-    : {
-      storageMode: "sync",
-      fontSizeStep: 1
-    };
-  storageMode.value = config.storageMode;
-  fontSizeStep.value = config.fontSizeStep;
+  if (data?.[KEY_CONFIG]) {
+    const config = JSON.parse(data?.[KEY_CONFIG]);
+    storageMode.value = config.storageMode;
+    fontSizeStep.value = config.fontSizeStep;
+  } else {
+    // 設定情報がない場合は初期値で設定を保存
+    await updateConfig();
+    handleOpenConfig();
+  }
 };
 
 // Storageの設定を更新
@@ -629,6 +645,25 @@ const handleChangeMemoColor = async (index, color) => {
 </script>
 
 <style lang="scss" scoped>
+.memo-list-root {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  height: 100%;
+  min-height: 0;
+}
+
+.memo-list-inner {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.bg-memolist-wrap {
+  flex: 0 0 50%;
+  width: 50%;
+  max-width: 50%;
+}
+
 .card {
   cursor: default;
   .button-group {
