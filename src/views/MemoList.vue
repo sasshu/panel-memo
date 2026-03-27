@@ -42,7 +42,6 @@
       >
         <div class="bg-memolist-wrap">
           <v-img
-            width="100%"
             src="../assets/bg-memolist.svg"
             style="opacity: 0.5"
           ></v-img>
@@ -678,9 +677,8 @@ const handleChangeMemoColor = async (index, color) => {
 }
 
 .bg-memolist-wrap {
-  flex: 0 0 50%;
   width: 50%;
-  max-width: 50%;
+  max-height: 50%;
 }
 
 .card {
