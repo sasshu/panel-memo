@@ -404,6 +404,18 @@
       </v-container>
     </v-card>
   </v-dialog>
+
+  <v-snackbar
+    :model-value="hasStorageError"
+    :timeout="2000"
+    location="top"
+    color="error"
+    variant="flat"
+    text="メモの保存に失敗しました。設定で「同期しない」を選ぶか、メモを減らしてください。"
+    class="text"
+    @update:model-value="onStorageErrorSnackbarModel"
+  >
+  </v-snackbar>
 </template>
 
 <script setup>
@@ -427,7 +439,6 @@ const memoFontCssVar = computed(() => ({
   "--memo-font-size": MEMO_FONT_SIZES[fontSizeStep.value]
 }));
 
-// 設定ダイアログはテレポートされるため、ルートの CSS 変数が届かない。カードに直接渡す。
 const draftConfigCardStyle = computed(() => ({
   "--memo-font-size-draft": MEMO_FONT_SIZES[draftFontSizeStep.value]
 }));
@@ -445,6 +456,13 @@ const isDeleteDialogOpened = ref(false);
 const isEditDialogOpened = ref(false);
 const isConfigDialogOpened = ref(false);
 const isMemoUpdated = ref(false);
+
+const hasStorageError = ref(false);
+
+onMounted(async () => {
+  await loadConfig();
+  await loadMemos();
+});
 
 // Storageから設定情報を取得
 const loadConfig = async () => {
@@ -481,15 +499,20 @@ const loadMemos = async () => {
 
 // Storageのメモを更新
 const updateMemos = async (mode = storageMode.value) => {
-  await chrome.storage?.[mode].set({
-    [KEY_MEMO]: JSON.stringify(memoList.value)
-  });
+  try {
+    await chrome.storage?.[mode].set({
+      [KEY_MEMO]: JSON.stringify(memoList.value)
+    });
+  } catch (error) {
+    hasStorageError.value = true;
+  }
 };
 
-onMounted(async () => {
-  await loadConfig();
-  await loadMemos();
-});
+const onStorageErrorSnackbarModel = (open) => {
+  if (!open) {
+    hasStorageError.value = false;
+  }
+};
 
 const openedMemo = computed(() => {
   if (isEditDialogOpened.value) {
@@ -588,10 +611,6 @@ const handleOpenConfig = () => {
   draftStorageMode.value = storageMode.value;
   draftFontSizeStep.value = fontSizeStep.value;
   isConfigDialogOpened.value = true;
-};
-
-const handleCancelConfig = () => {
-  isConfigDialogOpened.value = false;
 };
 
 const handleSaveConfig = async () => {
