@@ -1,7 +1,7 @@
 <template>
   <div class="memo-list-root" :style="memoFontCssVar">
     <div class="pt-4 px-4 pb-16 h-100">
-      <v-app-bar class="pr-2">
+      <v-app-bar>
         <v-btn icon size="large" @click="handleCreateMemo()">
           <v-icon icon="mdi-plus"></v-icon>
           <v-tooltip
@@ -143,15 +143,24 @@
       :style="draftConfigCardStyle"
     >
       <v-toolbar density="comfortable" elevation="1">
+        <v-toolbar-title>設定</v-toolbar-title>
+        <v-spacer></v-spacer>
         <v-btn
           icon
-          variant="text"
           density="comfortable"
+          variant="text"
+          size="large"
           @click="handleCancelConfig"
         >
           <v-icon icon="mdi-close"></v-icon>
+          <v-tooltip
+            text="閉じる"
+            activator="parent"
+            location="bottom"
+            open-delay="1000"
+          >
+          </v-tooltip>
         </v-btn>
-        <v-toolbar-title>設定</v-toolbar-title>
       </v-toolbar>
       <v-card-text class="flex-grow-1 overflow-auto">
         <div class="text-subtitle-1 font-weight-bold mb-2">メモの同期</div>
@@ -160,31 +169,35 @@
           同期しない場合はこのブラウザ・この端末のみでメモが保存されます。<br>
           同期しない方がより多くのメモを保存できます。
         </p>
-        <v-btn-toggle
-          v-model="draftStorageMode"
-          mandatory
-          divided
-          variant="outlined"
-          color="primary"
-          class="storage-toggle mb-8"
-        >
-          <v-btn value="local" class="text-none flex-grow-1">同期しない</v-btn>
-          <v-btn value="sync" class="text-none flex-grow-1">同期する</v-btn>
-        </v-btn-toggle>
+        <div class="config-toggle-wrap mb-8">
+          <v-btn-toggle
+            v-model="draftStorageMode"
+            mandatory
+            divided
+            variant="outlined"
+            color="primary"
+            class="config-toggle"
+          >
+            <v-btn value="local" class="text-none flex-grow-1">同期しない</v-btn>
+            <v-btn value="sync" class="text-none flex-grow-1">同期する</v-btn>
+          </v-btn-toggle>
+        </div>
 
         <div class="text-subtitle-1 font-weight-bold mb-2">メモの文字サイズ</div>
-        <v-btn-toggle
-          v-model="draftFontSizeStep"
-          mandatory
-          divided
-          variant="outlined"
-          color="primary"
-          class="font-toggle"
-        >
-          <v-btn :value="0" class="text-none flex-grow-1">小</v-btn>
-          <v-btn :value="1" class="text-none flex-grow-1">中</v-btn>
-          <v-btn :value="2" class="text-none flex-grow-1">大</v-btn>
-        </v-btn-toggle>
+        <div class="config-toggle-wrap">
+          <v-btn-toggle
+            v-model="draftFontSizeStep"
+            mandatory
+            divided
+            variant="outlined"
+            color="primary"
+            class="config-toggle"
+          >
+            <v-btn :value="0" class="text-none flex-grow-1">小</v-btn>
+            <v-btn :value="1" class="text-none flex-grow-1">中</v-btn>
+            <v-btn :value="2" class="text-none flex-grow-1">大</v-btn>
+          </v-btn-toggle>
+        </div>
         <p class="text text-draft mt-2">
           文字サイズはこのくらいです。<br>
           The font size is about this big.
@@ -669,10 +682,22 @@ const handleChangeMemoColor = async (index, color) => {
   z-index: 10;
 }
 
-.storage-toggle,
-.font-toggle {
+.config-toggle-wrap {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.config-toggle {
+  flex: 0 1 480px;
   width: 100%;
   max-width: 480px;
+  min-width: 0;
+}
+
+.config-toggle :deep(.v-btn) {
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 .config-dialog-card {
