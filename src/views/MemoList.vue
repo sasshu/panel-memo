@@ -212,14 +212,14 @@
       </v-card-text>
       <v-divider></v-divider>
       <v-card-actions class="pa-4">
-        <v-btn 
+        <v-spacer></v-spacer>
+        <v-btn
           variant="text"
           color="primary"
           @click="isConfigDialogOpened = false"
         >
           キャンセル
         </v-btn>
-        <v-spacer></v-spacer>
         <v-btn
           color="primary"
           variant="flat"
